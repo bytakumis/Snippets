@@ -30,6 +30,7 @@ func main() {
 		return
 	}
 
-	slog.Info("User signed in", "user", user)
-
+	slog.Info("user", "accessToken", *user.AuthenticationResult.AccessToken)
+	slog.Info("user", "refreshToken", *user.AuthenticationResult.RefreshToken)
+	slog.Info("user", "ExpiresIn", user.AuthenticationResult.ExpiresIn)
 }
