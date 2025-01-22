@@ -53,15 +53,21 @@ func (c *CognitoClient) SignIn(ctx context.Context, email, password string) (*co
 		var userNotFoundException *types.UserNotFoundException
 		switch {
 		case errors.As(err, &unauthorizedException):
-			slog.Warn("invalid password", "error", err)
+			slog.Info("invalid password", "error", err)
 			return nil, errors.New("user not found or invalid password")
 		case errors.As(err, &userNotFoundException):
-			slog.Warn("user not found", "error", err)
+			slog.Info("user not found", "error", err)
 			return nil, errors.New("user not found or invalid password")
 		default:
 			slog.Error("failed to initiate auth", "error", err)
 			return nil, errors.New("something went wrong")
 		}
+	}
+
+	switch output.ChallengeName {
+	case types.ChallengeNameTypeNewPasswordRequired:
+		slog.Info("requires new password")
+		return nil, errors.New("requires new password")
 	}
 
 	return output, nil
