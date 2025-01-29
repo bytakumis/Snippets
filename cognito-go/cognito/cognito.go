@@ -38,6 +38,17 @@ func NewCognitoClient(clientID, clientSecret string) (*CognitoClient, error) {
 	client := cognitoidentityprovider.NewFromConfig(cfg)
 	return &CognitoClient{client, clientID, clientSecret}, nil
 }
+
+func (c *CognitoClient) ConfirmSignUp(ctx context.Context, email, code string) (*cognitoidentityprovider.ConfirmSignUpOutput, error) {
+	input := &cognitoidentityprovider.ConfirmSignUpInput{
+		ClientId:         aws.String(c.clientID),
+		Username:         aws.String(email),
+		ConfirmationCode: aws.String(code),
+		SecretHash:       aws.String(c.GenerateSecretHash(email)),
+	}
+	return c.client.ConfirmSignUp(ctx, input)
+}
+
 func (c *CognitoClient) SignUp(ctx context.Context, email, password string) (*cognitoidentityprovider.SignUpOutput, error) {
 	input := &cognitoidentityprovider.SignUpInput{
 		ClientId:   aws.String(c.clientID),
@@ -49,7 +60,6 @@ func (c *CognitoClient) SignUp(ctx context.Context, email, password string) (*co
 }
 
 func (c *CognitoClient) SignIn(ctx context.Context, email, password string) (*cognitoidentityprovider.InitiateAuthOutput, error) {
-	secretHash := calculateSecretHash(c.clientID, c.clientSecret, email)
 	input := &cognitoidentityprovider.InitiateAuthInput{
 		AuthFlow: "USER_PASSWORD_AUTH",
 		AuthParameters: map[string]string{
