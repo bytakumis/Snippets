@@ -21,6 +21,10 @@ type CognitoClient struct {
 	clientSecret string
 }
 
+func (c *CognitoClient) GenerateSecretHash(email string) string {
+	return calculateSecretHash(c.clientID, c.clientSecret, email)
+}
+
 func NewCognitoClient(clientID, clientSecret string) (*CognitoClient, error) {
 	region := "ap-northeast-1"
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
@@ -42,7 +46,7 @@ func (c *CognitoClient) SignIn(ctx context.Context, email, password string) (*co
 		AuthParameters: map[string]string{
 			"USERNAME":    email,
 			"PASSWORD":    password,
-			"SECRET_HASH": secretHash,
+			"SECRET_HASH": c.GenerateSecretHash(email),
 		},
 		ClientId: aws.String(c.clientID),
 	}
