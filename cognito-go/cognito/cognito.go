@@ -38,6 +38,15 @@ func NewCognitoClient(clientID, clientSecret string) (*CognitoClient, error) {
 	client := cognitoidentityprovider.NewFromConfig(cfg)
 	return &CognitoClient{client, clientID, clientSecret}, nil
 }
+func (c *CognitoClient) SignUp(ctx context.Context, email, password string) (*cognitoidentityprovider.SignUpOutput, error) {
+	input := &cognitoidentityprovider.SignUpInput{
+		ClientId:   aws.String(c.clientID),
+		Username:   aws.String(email),
+		Password:   aws.String(password),
+		SecretHash: aws.String(c.GenerateSecretHash(email)),
+	}
+	return c.client.SignUp(ctx, input)
+}
 
 func (c *CognitoClient) SignIn(ctx context.Context, email, password string) (*cognitoidentityprovider.InitiateAuthOutput, error) {
 	secretHash := calculateSecretHash(c.clientID, c.clientSecret, email)
