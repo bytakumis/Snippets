@@ -31,15 +31,17 @@ func main() {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
-	// services.CreateCollectionWithNamedVector(client, "product", []string{"name", "code", "price", "supplier"})
+	itemService := services.NewItem(client, "Product")
+
+	// services.CreateCollectionWithNamedVector(client, "Product", []string{"name", "code", "price", "supplier"})
 
 	// testData := services.GetTestData()
-	// services.AddItems(client, "Product", testData)
+	// itemService.Add(testData)
 
-	// services.QueryWithNamedVector(client, "Product", map[string]string{"name": "スマートフォン", "supplier": "鈴木農家"}, []string{"name", "code", "price", "supplier"})
+	// itemService.QueryWithNamedVector(map[string]string{"name": "スマートフォン", "supplier": "鈴木農家"}, []string{"name", "code", "price", "supplier"})
 
-	// services.UpdateItem(client, "Product", "6bfd6362-d6c5-47eb-a3ee-cb9bd9251465", map[string]interface{}{"name": "かぼちゃ"})
+	// itemService.Update("33d59db4-29e0-4976-a396-fc0fa9f0362e", map[string]interface{}{"name": "かぼちゃ"})
 
-	// services.ExactSearch(client, "Product", "name", "スマートフォン", []string{"name", "code", "price", "supplier"})
-	services.PartialSearch(client, "Product", "name", "マートフ", []string{"name", "code", "price", "supplier"})
+	itemService.ExactSearch("name", "スマートフォン", []string{"name", "code", "price", "supplier"})
+	itemService.PartialSearch("name", "マートフ", []string{"name", "code", "price", "supplier"})
 }

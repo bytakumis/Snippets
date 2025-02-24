@@ -11,6 +11,18 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
+type Item struct {
+	client         *weaviate.Client
+	collectionName string
+}
+
+func NewItem(client *weaviate.Client, collectionName string) *Item {
+	return &Item{
+		client:         client,
+		collectionName: collectionName,
+	}
+}
+
 func GetTestData() []map[string]interface{} {
 	return []map[string]interface{}{
 		{
@@ -52,19 +64,19 @@ func GetTestData() []map[string]interface{} {
 	}
 }
 
-func AddItems(client *weaviate.Client, collectionName string, items []map[string]interface{}) error {
+func (i *Item) Add(items []map[string]interface{}) error {
 	objects := make([]*models.Object, len(items))
 
-	for i := range items {
-		objects[i] = &models.Object{
-			Class:      collectionName,
-			Properties: items[i],
+	for idx := range items {
+		objects[idx] = &models.Object{
+			Class:      i.collectionName,
+			Properties: items[idx],
 		}
 	}
 
-	batchRes, err := client.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
+	batchRes, err := i.client.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
 	if err != nil {
-		log.Fatalf("Failed to add objects to collection %s: %v", collectionName, err)
+		log.Fatalf("Failed to add objects to collection %s: %v", i.collectionName, err)
 	}
 
 	for _, res := range batchRes {
@@ -72,19 +84,18 @@ func AddItems(client *weaviate.Client, collectionName string, items []map[string
 			for _, err := range res.Result.Errors.Error {
 				log.Printf("Failed to add object: %+v", err)
 			}
-			log.Fatalf("Failed to add objects to collection %s", collectionName)
+			log.Fatalf("Failed to add objects to collection %s", i.collectionName)
 		}
 	}
 
 	return nil
 }
 
-func QueryWithNamedVector(client *weaviate.Client, collectionName string, queries map[string]string, selectFields []string) error {
+func (i *Item) QueryWithNamedVector(queries map[string]string, selectFields []string) error {
 	fields := make([]graphql.Field, len(selectFields)+1)
-	for i, field := range selectFields {
-		fields[i] = graphql.Field{Name: field}
+	for idx, field := range selectFields {
+		fields[idx] = graphql.Field{Name: field}
 	}
-	// For cosine distance
 	fields[len(selectFields)] = graphql.Field{
 		Name: "_additional",
 		Fields: []graphql.Field{
@@ -92,11 +103,10 @@ func QueryWithNamedVector(client *weaviate.Client, collectionName string, querie
 		},
 	}
 
-	response, err := client.GraphQL().Get().
-		WithClassName(collectionName).
+	response, err := i.client.GraphQL().Get().
+		WithClassName(i.collectionName).
 		WithFields(fields...).
-		WithNearText(client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"かぼちゃ"}).WithTargetVectors("name_vector")). // TODO: 動的にする
-		// WithNearText(client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"鈴木"}).WithTargetVectors("supplier_vector")).  // TODO: 動的にする
+		WithNearText(i.client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"かぼちゃ"}).WithTargetVectors("name_vector")). // TODO: 動的にする
 		WithLimit(2).
 		Do(context.Background())
 	if err != nil {
@@ -110,11 +120,11 @@ func QueryWithNamedVector(client *weaviate.Client, collectionName string, querie
 	return nil
 }
 
-func UpdateItem(client *weaviate.Client, collectionName string, id string, updatedItem map[string]interface{}) error {
-	err := client.Data().Updater().
+func (i *Item) Update(id string, updatedItem map[string]interface{}) error {
+	err := i.client.Data().Updater().
 		WithMerge().
 		WithID(id).
-		WithClassName(collectionName).
+		WithClassName(i.collectionName).
 		WithProperties(updatedItem).
 		Do(context.Background())
 
@@ -125,14 +135,14 @@ func UpdateItem(client *weaviate.Client, collectionName string, id string, updat
 	return nil
 }
 
-func ExactSearch(client *weaviate.Client, collectionName string, searchField string, searchValue string, selectFields []string) error {
+func (i *Item) ExactSearch(searchField string, searchValue string, selectFields []string) error {
 	fields := make([]graphql.Field, len(selectFields))
-	for i, field := range selectFields {
-		fields[i] = graphql.Field{Name: field}
+	for idx, field := range selectFields {
+		fields[idx] = graphql.Field{Name: field}
 	}
 
-	response, err := client.GraphQL().Get().
-		WithClassName(collectionName).
+	response, err := i.client.GraphQL().Get().
+		WithClassName(i.collectionName).
 		WithFields(fields...).
 		WithWhere(filters.Where().
 			WithPath([]string{searchField}).
@@ -151,14 +161,14 @@ func ExactSearch(client *weaviate.Client, collectionName string, searchField str
 	return nil
 }
 
-func PartialSearch(client *weaviate.Client, collectionName string, searchField string, searchValue string, selectFields []string) error {
+func (i *Item) PartialSearch(searchField string, searchValue string, selectFields []string) error {
 	fields := make([]graphql.Field, len(selectFields))
-	for i, field := range selectFields {
-		fields[i] = graphql.Field{Name: field}
+	for idx, field := range selectFields {
+		fields[idx] = graphql.Field{Name: field}
 	}
 
-	response, err := client.GraphQL().Get().
-		WithClassName(collectionName).
+	response, err := i.client.GraphQL().Get().
+		WithClassName(i.collectionName).
 		WithFields(fields...).
 		WithWhere(filters.Where().
 			WithPath([]string{searchField}).
