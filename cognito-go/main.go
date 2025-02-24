@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os"
 
+	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/bytakumis/Snippets/cognito"
 	"github.com/joho/godotenv"
 )
@@ -24,13 +26,22 @@ func main() {
 		panic("something went wrong.")
 	}
 
-	user, err := client.SignIn(context.TODO(), "test@example.com", "Password123!")
+	// user, err := client.SignIn(context.TODO(), "test2@example.com", "Password123!")
+	user, err := client.SignUp(context.TODO(), "test2@example.com", "Password123!")
 	if err != nil {
-		slog.Error("Error getting user by email", "error", err)
+		var usernameExistsException *cognitoidentityprovider.UsernameExistsException
+		var userNotFoundException *cognitoidentityprovider.UserNotFoundException
+		var notAuthorizedException *cognitoidentityprovider.NotAuthorizedException
+		switch {
+		case errors.As(err, &usernameExistsException):
+			slog.Error("User already exists", "error", err)
+		case errors.As(err, &userNotFoundException):
+			slog.Error("User not found", "error", err)
+		case errors.As(err, &notAuthorizedException):
+			slog.Error("Invalid password", "error", err)
+		default:
+			slog.Error("Error signing up", "error", err)
+		}
 		return
 	}
-
-	slog.Info("user", "accessToken", *user.AuthenticationResult.AccessToken)
-	slog.Info("user", "refreshToken", *user.AuthenticationResult.RefreshToken)
-	slog.Info("user", "ExpiresIn", user.AuthenticationResult.ExpiresIn)
-}
+	slog.Info("user", "user", user)
