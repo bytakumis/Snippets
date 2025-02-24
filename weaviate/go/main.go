@@ -32,9 +32,10 @@ func main() {
 	}
 
 	// services.CreateCollection(client)
+	services.CreateCollectionWithNamedVector(client, "multi_test", []string{"a", "b"})
 
 	// testData := services.GetTestData()
 	// services.AddItems(client, testData)
 
-	services.Query(client, []string{"プログラミング", "使っている"})
+	// services.Query(client, []string{"プログラミング", "使っている"})
 }

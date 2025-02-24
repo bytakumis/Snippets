@@ -36,3 +36,43 @@ func CreateCollection(client *weaviate.Client) error {
 
 	return nil
 }
+
+func CreateCollectionWithNamedVector(client *weaviate.Client, collectionName string, fields []string) error {
+
+	classObj := &models.Class{
+		Class: collectionName,
+		VectorConfig: map[string]models.VectorConfig{
+			"name_vector": {
+				Vectorizer: map[string]interface{}{
+					"text2vec-openai": map[string]interface{}{
+						"model":      "text-embedding-3-small",
+						"properties": []string{"name"},
+					},
+				},
+				VectorIndexType: "hnsw",
+			},
+			"address_vector": {
+				Vectorizer: map[string]interface{}{
+					"text2vec-openai": map[string]interface{}{
+						"model":      "text-embedding-3-small",
+						"properties": []string{"address"},
+					},
+				},
+				VectorIndexType: "hnsw",
+			},
+		},
+		Properties: []*models.Property{
+			{Name: "name", DataType: []string{"text"}},
+			{Name: "address", DataType: []string{"text"}},
+		},
+	}
+
+	err := client.Schema().ClassCreator().WithClass(classObj).Do(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to create collection: %v", err)
+	}
+
+	slog.Info("Collection created successfully")
+
+	return nil
+}
