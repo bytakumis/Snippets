@@ -38,5 +38,7 @@ func main() {
 
 	// services.QueryWithNamedVector(client, "Product", map[string]string{"name": "スマートフォン", "supplier": "鈴木農家"}, []string{"name", "code", "price", "supplier"})
 
-	services.UpdateItem(client, "Product", "6bfd6362-d6c5-47eb-a3ee-cb9bd9251465", map[string]interface{}{"name": "かぼちゃ"})
+	// services.UpdateItem(client, "Product", "6bfd6362-d6c5-47eb-a3ee-cb9bd9251465", map[string]interface{}{"name": "かぼちゃ"})
+
+	services.ExactSearch(client, "Product", "name", "スマートフォン", []string{"name", "code", "price", "supplier"})
 }

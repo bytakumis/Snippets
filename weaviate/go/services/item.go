@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/weaviate/weaviate/entities/models"
 )
@@ -120,6 +121,32 @@ func UpdateItem(client *weaviate.Client, collectionName string, id string, updat
 	if err != nil {
 		log.Fatalf("Failed to update object: %v", err)
 	}
+
+	return nil
+}
+
+func ExactSearch(client *weaviate.Client, collectionName string, searchField string, searchValue string, selectFields []string) error {
+	fields := make([]graphql.Field, len(selectFields))
+	for i, field := range selectFields {
+		fields[i] = graphql.Field{Name: field}
+	}
+
+	response, err := client.GraphQL().Get().
+		WithClassName(collectionName).
+		WithFields(fields...).
+		WithWhere(filters.Where().
+			WithPath([]string{searchField}).
+			WithOperator(filters.Equal).
+			WithValueString(searchValue)).
+		WithLimit(2).
+		Do(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to query: %v", err)
+	}
+
+	fmt.Println("________________________--")
+	fmt.Println(response)
+	fmt.Println("________________________--")
 
 	return nil
 }
