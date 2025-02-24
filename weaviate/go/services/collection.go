@@ -39,32 +39,30 @@ func CreateCollection(client *weaviate.Client) error {
 
 func CreateCollectionWithNamedVector(client *weaviate.Client, collectionName string, fields []string) error {
 
+	vectorConfig := make(map[string]models.VectorConfig, len(fields))
+	properties := make([]*models.Property, len(fields))
+
+	for i, field := range fields {
+		vectorName := field + "_vector"
+		vectorConfig[vectorName] = models.VectorConfig{
+			Vectorizer: map[string]interface{}{
+				"text2vec-openai": map[string]interface{}{
+					"model":      "text-embedding-3-small",
+					"properties": []string{field},
+				},
+			},
+			VectorIndexType: "hnsw",
+		}
+		properties[i] = &models.Property{
+			Name:     field,
+			DataType: []string{"text"},
+		}
+	}
+
 	classObj := &models.Class{
-		Class: collectionName,
-		VectorConfig: map[string]models.VectorConfig{
-			"name_vector": {
-				Vectorizer: map[string]interface{}{
-					"text2vec-openai": map[string]interface{}{
-						"model":      "text-embedding-3-small",
-						"properties": []string{"name"},
-					},
-				},
-				VectorIndexType: "hnsw",
-			},
-			"address_vector": {
-				Vectorizer: map[string]interface{}{
-					"text2vec-openai": map[string]interface{}{
-						"model":      "text-embedding-3-small",
-						"properties": []string{"address"},
-					},
-				},
-				VectorIndexType: "hnsw",
-			},
-		},
-		Properties: []*models.Property{
-			{Name: "name", DataType: []string{"text"}},
-			{Name: "address", DataType: []string{"text"}},
-		},
+		Class:        collectionName,
+		VectorConfig: vectorConfig,
+		Properties:   properties,
 	}
 
 	err := client.Schema().ClassCreator().WithClass(classObj).Do(context.Background())
