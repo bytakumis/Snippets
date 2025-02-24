@@ -31,11 +31,10 @@ func main() {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
-	// services.CreateCollection(client)
-	services.CreateCollectionWithNamedVector(client, "multi_test", []string{"a", "b"})
+	// services.CreateCollectionWithNamedVector(client, "question", []string{"question", "answer"})
 
 	// testData := services.GetTestData()
-	// services.AddItems(client, testData)
+	// services.AddItems(client, "Question", testData)
 
-	// services.Query(client, []string{"プログラミング", "使っている"})
+	services.QueryWithNamedVector(client, map[string]string{"question": "プログラミング", "answer": "使っている"})
 }

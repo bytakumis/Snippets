@@ -46,8 +46,8 @@ func CreateCollectionWithNamedVector(client *weaviate.Client, collectionName str
 		vectorName := field + "_vector"
 		vectorConfig[vectorName] = models.VectorConfig{
 			Vectorizer: map[string]interface{}{
-				"text2vec-openai": map[string]interface{}{
-					"model":      "text-embedding-3-small",
+				"text2vec-cohere": map[string]interface{}{
+					"model":      "embed-multilingual-light-v3.0",
 					"properties": []string{field},
 				},
 			},
