@@ -94,7 +94,7 @@ func QueryWithNamedVector(client *weaviate.Client, collectionName string, querie
 	response, err := client.GraphQL().Get().
 		WithClassName(collectionName).
 		WithFields(fields...).
-		WithNearText(client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"スマートフォン"}).WithTargetVectors("name_vector")). // TODO: 動的にする
+		WithNearText(client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"かぼちゃ"}).WithTargetVectors("name_vector")). // TODO: 動的にする
 		// WithNearText(client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"鈴木"}).WithTargetVectors("supplier_vector")).  // TODO: 動的にする
 		WithLimit(2).
 		Do(context.Background())
@@ -105,6 +105,21 @@ func QueryWithNamedVector(client *weaviate.Client, collectionName string, querie
 	fmt.Println("________________________--")
 	fmt.Println(response)
 	fmt.Println("________________________--")
+
+	return nil
+}
+
+func UpdateItem(client *weaviate.Client, collectionName string, id string, updatedItem map[string]interface{}) error {
+	err := client.Data().Updater().
+		WithMerge().
+		WithID(id).
+		WithClassName(collectionName).
+		WithProperties(updatedItem).
+		Do(context.Background())
+
+	if err != nil {
+		log.Fatalf("Failed to update object: %v", err)
+	}
 
 	return nil
 }
