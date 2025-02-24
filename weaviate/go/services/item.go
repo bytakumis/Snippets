@@ -150,3 +150,29 @@ func ExactSearch(client *weaviate.Client, collectionName string, searchField str
 
 	return nil
 }
+
+func PartialSearch(client *weaviate.Client, collectionName string, searchField string, searchValue string, selectFields []string) error {
+	fields := make([]graphql.Field, len(selectFields))
+	for i, field := range selectFields {
+		fields[i] = graphql.Field{Name: field}
+	}
+
+	response, err := client.GraphQL().Get().
+		WithClassName(collectionName).
+		WithFields(fields...).
+		WithWhere(filters.Where().
+			WithPath([]string{searchField}).
+			WithOperator(filters.Like).
+			WithValueString("*" + searchValue + "*")).
+		WithLimit(2).
+		Do(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to query: %v", err)
+	}
+
+	fmt.Println("________________________--")
+	fmt.Println(response)
+	fmt.Println("________________________--")
+
+	return nil
+}
