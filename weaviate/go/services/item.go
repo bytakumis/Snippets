@@ -13,16 +13,40 @@ import (
 func GetTestData() []map[string]interface{} {
 	return []map[string]interface{}{
 		{
-			"question": "このシステムはどのようなサービスを使っていますか？",
-			"answer":   "Weaviateを使っています",
+			"name":     "とあるお米",
+			"code":     "ABC001",
+			"price":    "150",
+			"supplier": "鈴木農家",
 		},
 		{
-			"question": "プログラミング言語は何を使っていますか？",
-			"answer":   "Goを使っています",
+			"name":     "とあるトマト",
+			"code":     "ABC002",
+			"price":    "250",
+			"supplier": "鈴木農家",
 		},
 		{
-			"question": "Gitリポジトリサービスは何を使っていますか？",
-			"answer":   "GitHubを使っています",
+			"name":     "スマートフォン",
+			"code":     "ABC003",
+			"price":    "300000",
+			"supplier": "鈴木農園",
+		},
+		{
+			"name":     "ノートパソコン",
+			"code":     "ABC004",
+			"price":    "400000",
+			"supplier": "鈴木農園",
+		},
+		{
+			"name":     "スマートフォン",
+			"code":     "ZZZ001",
+			"price":    "200000",
+			"supplier": "佐藤電気",
+		},
+		{
+			"name":     "ノートパソコン",
+			"code":     "ZZZ002",
+			"price":    "400000",
+			"supplier": "佐藤電気",
 		},
 	}
 }
@@ -54,29 +78,33 @@ func AddItems(client *weaviate.Client, collectionName string, items []map[string
 	return nil
 }
 
-func QueryWithNamedVector(client *weaviate.Client, queries map[string]string) error {
+func QueryWithNamedVector(client *weaviate.Client, collectionName string, queries map[string]string, selectFields []string) error {
+	fields := make([]graphql.Field, len(selectFields)+1)
+	for i, field := range selectFields {
+		fields[i] = graphql.Field{Name: field}
+	}
+	// For cosine distance
+	fields[len(selectFields)] = graphql.Field{
+		Name: "_additional",
+		Fields: []graphql.Field{
+			{Name: "certainty"},
+		},
+	}
+
 	response, err := client.GraphQL().Get().
-		WithClassName("Question").
-		WithFields(
-			graphql.Field{Name: "question"},
-			graphql.Field{Name: "answer"},
-			graphql.Field{
-				Name: "_additional",
-				Fields: []graphql.Field{
-					{Name: "distance"},
-					{Name: "certainty"},
-				},
-			},
-		).
-		WithNearText(client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"プログラミング"}).WithTargetVectors("question_vector")). // TODO: 動的にする
-		WithNearText(client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"Go"}).WithTargetVectors("answer_vector")).        // TODO: 動的にする
+		WithClassName(collectionName).
+		WithFields(fields...).
+		WithNearText(client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"スマートフォン"}).WithTargetVectors("name_vector")). // TODO: 動的にする
+		// WithNearText(client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"鈴木"}).WithTargetVectors("supplier_vector")).  // TODO: 動的にする
 		WithLimit(2).
 		Do(context.Background())
 	if err != nil {
 		log.Fatalf("Failed to query: %v", err)
 	}
 
+	fmt.Println("________________________--")
 	fmt.Println(response)
+	fmt.Println("________________________--")
 
 	return nil
 }
