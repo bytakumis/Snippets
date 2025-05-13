@@ -186,3 +186,31 @@ func (i *Item) PartialSearch(searchField string, searchValue string, selectField
 
 	return nil
 }
+
+func (i *Item) HybridSearch(searchField string, searchValue string, selectFields []string) error {
+	fields := make([]graphql.Field, len(selectFields)+1)
+	for idx, field := range selectFields {
+		fields[idx] = graphql.Field{Name: field}
+	}
+	fields[len(selectFields)] = graphql.Field{
+		Name: "_additional",
+		Fields: []graphql.Field{
+			{Name: "score"},
+		},
+	}
+
+	response, err := i.client.GraphQL().Get().
+		WithClassName(i.collectionName).
+		WithFields(fields...).
+		WithHybrid(i.client.GraphQL().HybridArgumentBuilder().WithQuery(searchValue).WithTargetVectors(searchField + "_vector").WithAlpha(1.0)).
+		Do(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to query: %v", err)
+	}
+
+	fmt.Println("________________________--")
+	fmt.Println(response)
+	fmt.Println("________________________--")
+
+	return nil
+}
