@@ -6,8 +6,7 @@ import (
 	"os"
 
 	"github.com/bytakumis/Snippets/weaviate/go/weaviate"
-	"github.com/bytakumis/Snippets/weaviate/go/weaviate/collection"
-	"github.com/bytakumis/Snippets/weaviate/go/weaviate/record"
+	"github.com/bytakumis/Snippets/weaviate/go/weaviate/backup"
 
 	"github.com/joho/godotenv"
 )
@@ -33,34 +32,45 @@ func main() {
 		return
 	}
 
-	// Create collection
-	createArg := collection.CollectionCreateWithVectorArgs{
-		Name:       "TEST",
-		FieldNames: []string{"name", "code"},
-	}
-	err = weaviate.Collection.CreateWithVector(createArg)
-	if err != nil {
-		slog.Error("Error create weaviate collection", "error", err)
-		return
-	}
+	// // Create collection
+	// createArg := collection.CollectionCreateWithVectorArgs{
+	// 	Name:       collectionName,
+	// 	FieldNames: []string{"name", "code"},
+	// }
+	// err = weaviate.Collection.CreateWithVector(createArg)
+	// if err != nil {
+	// 	slog.Error("Error create weaviate collection", "error", err)
+	// 	return
+	// }
 
-	// Insert record
-	insertArg := record.RecordInsertArg{
+	// // Insert record
+	// insertArg := record.RecordInsertArg{
+	// 	CollectionName: collectionName,
+	// 	Item: []record.RecordInsertItem{
+	// 		{
+	// 			Header: "name",
+	// 			Value:  "testA",
+	// 		},
+	// 		{
+	// 			Header: "code",
+	// 			Value:  "testB",
+	// 		},
+	// 	},
+	// }
+	// err = weaviate.Record.Insert(insertArg)
+	// if err != nil {
+	// 	slog.Error("Error insert record to weaviate", "error", err)
+	// 	return
+	// }
+
+	// Create backup
+	backupArg := backup.BackupCreateArg{
 		CollectionName: collectionName,
-		Item: []record.RecordInsertItem{
-			{
-				Header: "name",
-				Value:  "testA",
-			},
-			{
-				Header: "code",
-				Value:  "testB",
-			},
-		},
+		BackupID:       "testbackup",
 	}
-	err = weaviate.Record.Insert(insertArg)
+	err = weaviate.Backup.Create(backupArg)
 	if err != nil {
-		slog.Error("Error insert record to weaviate", "error", err)
+		slog.Error("Error create backup", "error", err)
 		return
 	}
 
