@@ -1,47 +1,68 @@
 package main
 
 import (
-	"log"
+	"context"
 	"log/slog"
 	"os"
 
-	"github.com/bytakumis/Snippets/weaviate/go/services"
+	"github.com/bytakumis/Snippets/weaviate/go/weaviate"
+	"github.com/bytakumis/Snippets/weaviate/go/weaviate/collection"
+	"github.com/bytakumis/Snippets/weaviate/go/weaviate/record"
+
 	"github.com/joho/godotenv"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 )
 
 func main() {
+	collectionName := "TEST"
+
 	err := godotenv.Load()
 	if err != nil {
 		slog.Error("Error loading .env file", "error", err)
 		panic("something went wrong.")
 	}
 
-	cfg := weaviate.Config{
-		Host:       os.Getenv("WEAVIATE_REST_URL"),
-		Scheme:     "https",
-		AuthConfig: auth.ApiKey{Value: os.Getenv("WEAVIATE_ADMIN_API_KEY")},
-		Headers: map[string]string{
-			"X-Cohere-Api-Key": os.Getenv("COHERE_API_KEY"),
+	ctx := context.Background()
+	weaviateCfg := weaviate.WeaviateClientNewArgs{
+		WeaviateHostURL:     os.Getenv("WEAVIATE_REST_URL"),
+		WeaviateAdminAPIKey: os.Getenv("WEAVIATE_ADMIN_API_KEY"),
+		OpenAIKey:           os.Getenv("OPENAI_API_KEY"),
+	}
+	weaviate, err := weaviate.New(ctx, weaviateCfg)
+	if err != nil {
+		slog.Error("Error creating weaviate client", "error", err)
+		return
+	}
+
+	// Create collection
+	createArg := collection.CollectionCreateWithVectorArgs{
+		Name:       "TEST",
+		FieldNames: []string{"name", "code"},
+	}
+	err = weaviate.Collection.CreateWithVector(createArg)
+	if err != nil {
+		slog.Error("Error create weaviate collection", "error", err)
+		return
+	}
+
+	// Insert record
+	insertArg := record.RecordInsertArg{
+		CollectionName: collectionName,
+		Item: []record.RecordInsertItem{
+			{
+				Header: "name",
+				Value:  "testA",
+			},
+			{
+				Header: "code",
+				Value:  "testB",
+			},
 		},
 	}
-	client, err := weaviate.NewClient(cfg)
+	err = weaviate.Record.Insert(insertArg)
 	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
+		slog.Error("Error insert record to weaviate", "error", err)
+		return
 	}
 
-	itemService := services.NewItem(client, "Product")
-
-	// services.CreateCollectionWithNamedVector(client, "Product", []string{"name", "code", "price", "supplier"})
-
-	// testData := services.GetTestData()
-	// itemService.Add(testData)
-
-	// itemService.QueryWithNamedVector(map[string]string{"name": "スマートフォン", "supplier": "鈴木農家"}, []string{"name", "code", "price", "supplier"})
-
-	// itemService.Update("33d59db4-29e0-4976-a396-fc0fa9f0362e", map[string]interface{}{"name": "かぼちゃ"})
-
-	itemService.ExactSearch("name", "スマートフォン", []string{"name", "code", "price", "supplier"})
-	itemService.PartialSearch("name", "マートフ", []string{"name", "code", "price", "supplier"})
+	slog.Info("finished!!")
 }
